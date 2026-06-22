@@ -32,6 +32,7 @@ pub struct Snapshot {
     pub tlp_ok: bool,
     pub asusd_ok: bool,
     pub cardwire_ok: bool,
+    pub gpu_guard: bool,
 }
 
 impl Snapshot {
@@ -98,5 +99,6 @@ pub fn read() -> Snapshot {
         tlp_ok: sysfs::service_active("tlp"),
         asusd_ok: sysfs::service_active("asusd"),
         cardwire_ok: sysfs::service_active("cardwired"),
+        gpu_guard: crate::gpuguard::is_on(),
     }
 }

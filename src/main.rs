@@ -1,7 +1,7 @@
 //! ergctl — power cockpit for the ASUS ProArt P16. CLI + TUI frontends over the
 //! ergctl core library.
 
-use ergctl::{apply, tui};
+use ergctl::{apply, gpuguard, tui};
 use std::io::IsTerminal;
 use std::process::{exit, Command};
 
@@ -36,6 +36,21 @@ fn main() {
                 exit(1);
             }
         }
+        "gpu-guard" => match args.get(2).map(String::as_str).unwrap_or("status") {
+            "on" => {
+                ensure_root();
+                gpuguard::on();
+            }
+            "off" => {
+                ensure_root();
+                gpuguard::off();
+            }
+            "status" => gpuguard::status(),
+            other => {
+                eprintln!("ergctl: gpu-guard: unknown '{other}' (use on|off|status)");
+                exit(2);
+            }
+        },
         "-h" | "--help" | "help" => print_help(),
         "-V" | "--version" => println!("ergctl {}", env!("CARGO_PKG_VERSION")),
         other => {
@@ -57,7 +72,9 @@ fn print_help() {
          \x20 turbo    Force max performance + dGPU, even on battery (sticky until 'auto')\n\
          \x20 status   Print current mode and live power state\n\
          \x20 apply    Re-apply the correct state for the current override + power source\n\
-         \x20          (used by the systemd service on boot/resume/power events)\n\n\
+         \x20          (used by the systemd service on boot/resume/power events)\n\
+         \x20 gpu-guard {{on|off|status}}  Default GL/EGL to the iGPU so Electron/Chromium\n\
+         \x20          apps don't wake the dGPU (prime-run still overrides for games)\n\n\
          CONFIG:\n  /etc/ergctl.conf",
         env!("CARGO_PKG_VERSION")
     );

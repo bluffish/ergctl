@@ -77,6 +77,9 @@ SOUND_POWER_SAVE_ON_BAT=1
 EOF
 systemctl restart tlp || true
 
+echo "==> Enabling GPU guard (Electron/Chromium default to iGPU)"
+/usr/bin/ergctl gpu-guard on || true
+
 echo "==> Enabling services"
 systemctl daemon-reload
 udevadm control --reload

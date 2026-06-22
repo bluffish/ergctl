@@ -51,7 +51,18 @@ ergctl auto       # automatic battery/AC switching (default)
 ergctl turbo      # force max performance + dGPU, even on battery (sticky until 'auto')
 ergctl status     # print mode + live power state
 ergctl apply      # re-apply for current override/power source (used by the service)
+ergctl gpu-guard {on|off|status}   # see below
 ```
+
+### GPU guard (stop Electron apps waking the dGPU)
+
+Electron/Chromium probe every GPU at launch via the EGL/GLX vendor libraries,
+which opens the NVIDIA nodes and wakes the dGPU — even though they render on the
+iGPU. `ergctl gpu-guard on` installs `/etc/environment.d/90-ergctl-igpu.conf`
+pointing EGL/GLX at **mesa only**, so apps default to the iGPU and never touch
+nvidia. `prime-run` still overrides per-process, so games can use the dGPU on
+demand. Takes effect after a logout/login (then restart the apps). Enabled by
+`install.sh`.
 
 Mutating commands and the TUI self-elevate via `sudo`.
 

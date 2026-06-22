@@ -7,6 +7,7 @@
 
 pub mod apply;
 pub mod config;
+pub mod gpuguard;
 pub mod readers;
 pub mod sysfs;
 pub mod tui;

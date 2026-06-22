@@ -27,10 +27,10 @@ fn apply_state(label: &str, s: &StateCfg) {
     sysfs::set_platform_profile(&s.profile);
     sysfs::set_boost(s.boost);
     sysfs::set_epp(&s.epp);
+    // Keep the dGPU in hybrid (present) and let NVIDIA RTD3 + the gpu-guard keep
+    // it asleep when idle. We deliberately avoid Integrated mode: its hard block
+    // traps the dGPU at D0 if it's switched while awake (RTD3 can never finish).
     sysfs::cardwire_set(&s.gpu);
-    // nvidia-powerd (Dynamic Boost) keeps the dGPU at D0; only run it when the
-    // dGPU is actually available, so Integrated mode can reach D3cold.
-    sysfs::set_service("nvidia-powerd", s.gpu != "integrated");
     println!(
         "[ergctl] {label}: profile={} gpu={} boost={} epp={}",
         s.profile, s.gpu, s.boost, s.epp

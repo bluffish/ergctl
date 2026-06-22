@@ -51,7 +51,9 @@ impl Config {
             charge_limit: m.get("charge_limit").and_then(|v| v.parse().ok()),
             battery: StateCfg {
                 profile: s("battery_profile", "quiet"),
-                gpu: s("battery_gpu", "integrated"),
+                // hybrid (not integrated): RTD3 + gpu-guard keep the dGPU asleep
+                // without the Integrated-mode block that traps it at D0.
+                gpu: s("battery_gpu", "hybrid"),
                 boost: b("battery_boost", false),
                 epp: s("battery_epp", "power"),
             },

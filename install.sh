@@ -35,6 +35,8 @@ install -Dm644 "$DIR/udev/99-ergctl.rules"          /usr/lib/udev/rules.d/99-erg
 if [[ -f /etc/ergctl.conf ]]; then
   echo "    keeping existing /etc/ergctl.conf (new default at .conf.new)"
   install -Dm644 "$DIR/config/ergctl.conf" /etc/ergctl.conf.new
+  # Migrate deprecated integrated GPU mode -> hybrid (integrated traps the dGPU at D0).
+  sed -i -E 's/^([[:space:]]*(battery|ac)_gpu[[:space:]]*=[[:space:]]*)integrated/\1hybrid/' /etc/ergctl.conf
 else
   install -Dm644 "$DIR/config/ergctl.conf" /etc/ergctl.conf
 fi

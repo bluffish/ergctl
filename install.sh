@@ -80,6 +80,12 @@ systemctl restart tlp || true
 echo "==> Enabling GPU guard (Electron/Chromium default to iGPU)"
 /usr/bin/ergctl gpu-guard on || true
 
+echo "==> Allowing passwordless sudo for ergctl (scoped to the binary)"
+SUDOERS=/etc/sudoers.d/ergctl
+printf '%s ALL=(root) NOPASSWD: /usr/bin/ergctl\n' "$BUILD_USER" > "$SUDOERS"
+chown root:root "$SUDOERS"; chmod 0440 "$SUDOERS"
+visudo -cf "$SUDOERS" >/dev/null || { rm -f "$SUDOERS"; echo "  (sudoers check failed, skipped)"; }
+
 echo "==> Enabling services"
 systemctl daemon-reload
 udevadm control --reload

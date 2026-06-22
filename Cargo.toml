@@ -1,0 +1,18 @@
+[package]
+name = "proart-power"
+version = "0.1.0"
+edition = "2021"
+description = "Power mode controller for the ASUS ProArt P16 (battery / AC / turbo)"
+license = "MIT"
+
+[[bin]]
+name = "proart-power"
+path = "src/main.rs"
+
+# Intentionally zero dependencies: this is system glue that writes sysfs and
+# shells out to cardwire. No crates.io fetch needed, builds fully offline.
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true

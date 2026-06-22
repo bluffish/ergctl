@@ -1,0 +1,14 @@
+[Unit]
+Description=ProArt power mode controller (apply battery/AC/turbo state)
+# cardwire must be up so we can drive GPU mode.
+After=cardwired.service multi-user.target
+Wants=cardwired.service
+# Don't fight tlp's own apply on boot.
+After=tlp.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/proart-power apply
+
+[Install]
+WantedBy=multi-user.target

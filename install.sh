@@ -35,8 +35,18 @@ if [[ -f "$TLP_DROPIN" ]]; then
   cp -a "$TLP_DROPIN" "${TLP_DROPIN}.bak-$(date +%s)"
 fi
 cat > "$TLP_DROPIN" <<'EOF'
-# Deep tunables only — proart-power owns platform_profile, CPU boost, EPP,
-# GPU mode and charge limit. Do not re-add those keys here (single ownership).
+# proart-power owns platform_profile, CPU boost, EPP, GPU mode and charge limit.
+# TLP ships built-in defaults for EPP/platform_profile in defaults.conf, so we
+# must EXPLICITLY DISABLE them (empty value = TLP leaves the knob alone; see the
+# "use PARAMETER=\"\"" note in /etc/tlp.conf). Omitting is NOT enough.
+CPU_ENERGY_PERF_POLICY_ON_AC=""
+CPU_ENERGY_PERF_POLICY_ON_BAT=""
+PLATFORM_PROFILE_ON_AC=""
+PLATFORM_PROFILE_ON_BAT=""
+CPU_BOOST_ON_AC=""
+CPU_BOOST_ON_BAT=""
+
+# --- Deep tunables TLP keeps ---
 CPU_SCALING_GOVERNOR_ON_AC=powersave
 CPU_SCALING_GOVERNOR_ON_BAT=powersave
 PCIE_ASPM_ON_AC=default

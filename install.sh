@@ -26,6 +26,10 @@ fi
 echo "==> Establishing single ownership of the dynamic knobs"
 # 1) cardwire stops auto-switching — proart-power drives it.
 cardwire config battery-auto-switch false || true
+# experimental_nvidia_block breaks NVIDIA RTD3 (GPU stuck at D0). Keep it OFF;
+# Integrated mode already blocks the render node, and RTD3 + cardwire routing
+# keep the dGPU asleep when idle.
+cardwire config experimental-nvidia-block false || true
 cardwire config save || true
 
 # 2) Strip overlapping keys from the TLP drop-in (we own profile/boost/EPP now);

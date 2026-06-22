@@ -98,6 +98,15 @@ pub fn cardwire_set(mode: &str) {
     }
 }
 
+/// Start/stop a systemd unit. Used for nvidia-powerd, which otherwise holds the
+/// dGPU at D0 even with no clients (defeats D3cold on battery).
+pub fn set_service(name: &str, want_active: bool) {
+    let action = if want_active { "start" } else { "stop" };
+    if let Err(e) = Command::new("systemctl").arg(action).arg(name).status() {
+        eprintln!("proart-power: systemctl {action} {name}: {e}");
+    }
+}
+
 pub fn cardwire_get() -> String {
     Command::new("cardwire")
         .arg("get")

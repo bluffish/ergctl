@@ -32,6 +32,9 @@ fn apply_state(label: &str, s: &StateCfg) {
     sysfs::set_boost(s.boost);
     sysfs::set_epp(&s.epp);
     sysfs::cardwire_set(&s.gpu);
+    // nvidia-powerd (Dynamic Boost) keeps the dGPU at D0; only run it when the
+    // dGPU is actually available, so Integrated mode can reach D3cold.
+    sysfs::set_service("nvidia-powerd", s.gpu != "integrated");
     println!(
         "[proart-power] {label}: profile={} gpu={} boost={} epp={}",
         s.profile, s.gpu, s.boost, s.epp

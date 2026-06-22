@@ -1,18 +1,19 @@
-//! proart-power — single owner of the dynamic power "mode" on the ASUS ProArt P16.
-//!
-//! It reacts to one trigger (a udev power-source event / boot / resume), reads a
-//! persisted override (auto|turbo), and applies one coherent state by driving
-//! cardwire (GPU), the ACPI platform profile, CPU boost, EPP and charge limit.
+//! ergctl — power cockpit for the ASUS ProArt P16. CLI + TUI frontends over the
+//! ergctl core library.
 
-mod apply;
-mod config;
-mod sysfs;
-
+use ergctl::{apply, tui};
+use std::io::IsTerminal;
 use std::process::{exit, Command};
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    let cmd = args.get(1).map(String::as_str).unwrap_or("status");
+    // No subcommand: open the TUI when interactive, else print status.
+    let default = if std::io::stdout().is_terminal() {
+        "tui"
+    } else {
+        "status"
+    };
+    let cmd = args.get(1).map(String::as_str).unwrap_or(default);
 
     match cmd {
         "status" => apply::status(),
@@ -28,10 +29,17 @@ fn main() {
             ensure_root();
             apply::apply_current();
         }
+        "tui" => {
+            ensure_root();
+            if let Err(e) = tui::run() {
+                eprintln!("ergctl: tui error: {e}");
+                exit(1);
+            }
+        }
         "-h" | "--help" | "help" => print_help(),
-        "-V" | "--version" => println!("proart-power {}", env!("CARGO_PKG_VERSION")),
+        "-V" | "--version" => println!("ergctl {}", env!("CARGO_PKG_VERSION")),
         other => {
-            eprintln!("proart-power: unknown command '{other}'\n");
+            eprintln!("ergctl: unknown command '{other}'\n");
             print_help();
             exit(2);
         }
@@ -40,15 +48,17 @@ fn main() {
 
 fn print_help() {
     println!(
-        "proart-power {}\n\n\
-         USAGE:\n  proart-power <command>\n\n\
+        "ergctl {}\n\n\
+         USAGE:\n  ergctl [command]\n\n\
          COMMANDS:\n\
-         \x20 auto     Hand control to automatic battery/AC switching (default)\n\
+         \x20 (none)   Open the TUI cockpit (when run in a terminal)\n\
+         \x20 tui      Open the TUI cockpit explicitly\n\
+         \x20 auto     Hand control to automatic battery/AC switching (default mode)\n\
          \x20 turbo    Force max performance + dGPU, even on battery (sticky until 'auto')\n\
-         \x20 status   Show current mode and live power state\n\
+         \x20 status   Print current mode and live power state\n\
          \x20 apply    Re-apply the correct state for the current override + power source\n\
          \x20          (used by the systemd service on boot/resume/power events)\n\n\
-         CONFIG:\n  /etc/proart-power.conf",
+         CONFIG:\n  /etc/ergctl.conf",
         env!("CARGO_PKG_VERSION")
     );
 }
@@ -67,8 +77,8 @@ fn euid() -> u32 {
     1
 }
 
-/// Mutating commands need root. If we aren't root, re-exec the same invocation
-/// under sudo so the user just gets a password prompt.
+/// Mutating commands (and the TUI, which can write + reads RAPL) need root. If we
+/// aren't root, re-exec the same invocation under sudo.
 fn ensure_root() {
     if euid() == 0 {
         return;
@@ -76,7 +86,7 @@ fn ensure_root() {
     let exe = match std::env::current_exe() {
         Ok(p) => p,
         Err(e) => {
-            eprintln!("proart-power: cannot find own path: {e}");
+            eprintln!("ergctl: cannot find own path: {e}");
             exit(1);
         }
     };
@@ -84,7 +94,7 @@ fn ensure_root() {
     match Command::new("sudo").arg(exe).args(&rest).status() {
         Ok(s) => exit(s.code().unwrap_or(1)),
         Err(e) => {
-            eprintln!("proart-power: failed to re-exec under sudo: {e}");
+            eprintln!("ergctl: failed to re-exec under sudo: {e}");
             exit(1);
         }
     }

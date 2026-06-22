@@ -1,16 +1,20 @@
 [package]
-name = "proart-power"
-version = "0.1.0"
+name = "ergctl"
+version = "0.2.0"
 edition = "2021"
-description = "Power mode controller for the ASUS ProArt P16 (battery / AC / turbo)"
+description = "Power cockpit for the ASUS ProArt P16 — CLI + TUI (battery / AC / turbo)"
 license = "MIT"
 
+[lib]
+name = "ergctl"
+path = "src/lib.rs"
+
 [[bin]]
-name = "proart-power"
+name = "ergctl"
 path = "src/main.rs"
 
-# Intentionally zero dependencies: this is system glue that writes sysfs and
-# shells out to cardwire. No crates.io fetch needed, builds fully offline.
+[dependencies]
+ratatui = "0.29"
 
 [profile.release]
 opt-level = "z"

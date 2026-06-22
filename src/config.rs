@@ -18,7 +18,12 @@ pub struct Config {
     pub turbo: StateCfg,
 }
 
-pub const DEFAULT_PATH: &str = "/etc/proart-power.conf";
+pub const DEFAULT_PATH: &str = "/etc/ergctl.conf";
+
+/// Active config path (overridable via ERGCTL_CONFIG, for testing).
+pub fn path() -> String {
+    std::env::var("ERGCTL_CONFIG").unwrap_or_else(|_| DEFAULT_PATH.to_string())
+}
 
 impl Config {
     pub fn load(path: &str) -> Config {
@@ -64,4 +69,31 @@ impl Config {
             },
         }
     }
+}
+
+/// Update (or append) a single `key = value` line in the config file, preserving
+/// comments and other keys. Used by the TUI to persist e.g. the charge limit.
+pub fn set_key(path: &str, key: &str, val: &str) -> std::io::Result<()> {
+    let mut lines: Vec<String> = fs::read_to_string(path)
+        .unwrap_or_default()
+        .lines()
+        .map(str::to_string)
+        .collect();
+    let mut found = false;
+    for line in lines.iter_mut() {
+        if line.trim_start().starts_with('#') {
+            continue;
+        }
+        if let Some((k, _)) = line.split_once('=') {
+            if k.trim() == key {
+                *line = format!("{key} = {val}");
+                found = true;
+                break;
+            }
+        }
+    }
+    if !found {
+        lines.push(format!("{key} = {val}"));
+    }
+    fs::write(path, lines.join("\n") + "\n")
 }

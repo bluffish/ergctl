@@ -1,15 +1,11 @@
 //! The decision + apply engine and the persisted override flag.
 
-use crate::config::{Config, StateCfg, DEFAULT_PATH};
+use crate::config::{self, Config, StateCfg};
 use crate::sysfs;
 use std::fs;
 
-const STATE_DIR: &str = "/run/proart-power";
-const STATE_FILE: &str = "/run/proart-power/mode";
-
-fn config_path() -> String {
-    std::env::var("PROART_POWER_CONFIG").unwrap_or_else(|_| DEFAULT_PATH.to_string())
-}
+const STATE_DIR: &str = "/run/ergctl";
+const STATE_FILE: &str = "/run/ergctl/mode";
 
 /// Persisted override: "turbo" if explicitly set, otherwise "auto".
 pub fn read_override() -> String {
@@ -23,7 +19,7 @@ pub fn read_override() -> String {
 fn write_override(mode: &str) {
     let _ = fs::create_dir_all(STATE_DIR);
     if let Err(e) = fs::write(STATE_FILE, mode) {
-        eprintln!("proart-power: persist override: {e}");
+        eprintln!("ergctl: persist override: {e}");
     }
 }
 
@@ -36,14 +32,14 @@ fn apply_state(label: &str, s: &StateCfg) {
     // dGPU is actually available, so Integrated mode can reach D3cold.
     sysfs::set_service("nvidia-powerd", s.gpu != "integrated");
     println!(
-        "[proart-power] {label}: profile={} gpu={} boost={} epp={}",
+        "[ergctl] {label}: profile={} gpu={} boost={} epp={}",
         s.profile, s.gpu, s.boost, s.epp
     );
 }
 
 /// Apply the coherent state for (override, power source). Idempotent.
 pub fn apply_current() {
-    let cfg = Config::load(&config_path());
+    let cfg = Config::load(&config::path());
     if let Some(cl) = cfg.charge_limit {
         sysfs::set_charge_limit(cl);
     }
@@ -60,7 +56,6 @@ pub fn set_mode_and_apply(mode: &str) {
 }
 
 pub fn status() {
-    let dgpu = format!("{}/power/runtime_status", sysfs::DGPU_PCI);
     println!("override         : {}", read_override());
     println!(
         "AC online        : {}",
@@ -80,13 +75,9 @@ pub fn status() {
             .unwrap_or_default()
     );
     println!("GPU mode         : {}", sysfs::cardwire_get());
-    println!(
-        "dGPU power       : {}",
-        sysfs::read_trim(&dgpu).unwrap_or_else(|| "?".into())
-    );
-    println!(
-        "charge limit     : {}",
-        sysfs::read_trim("/sys/class/power_supply/BAT1/charge_control_end_threshold")
-            .unwrap_or_default()
-    );
+    println!("dGPU power       : {}", sysfs::dgpu_runtime_status());
+    let cl = sysfs::bat_dir()
+        .and_then(|d| sysfs::read_trim(&format!("{d}/charge_control_end_threshold")))
+        .unwrap_or_default();
+    println!("charge limit     : {cl}");
 }

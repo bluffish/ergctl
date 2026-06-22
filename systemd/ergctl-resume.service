@@ -1,11 +1,11 @@
 [Unit]
-Description=Re-apply ProArt power mode after resume
+Description=Re-apply ergctl power mode after resume
 # Sleep can reset GPU/profile state — re-assert ours on wake.
 After=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/proart-power apply
+ExecStart=/usr/bin/ergctl apply
 
 [Install]
 WantedBy=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target

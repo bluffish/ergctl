@@ -1,5 +1,5 @@
 [Unit]
-Description=ProArt power mode controller (apply battery/AC/turbo state)
+Description=ergctl power mode controller (apply battery/AC/turbo state)
 # cardwire must be up so we can drive GPU mode.
 After=cardwired.service multi-user.target
 Wants=cardwired.service
@@ -8,7 +8,7 @@ After=tlp.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/proart-power apply
+ExecStart=/usr/bin/ergctl apply
 
 [Install]
 WantedBy=multi-user.target

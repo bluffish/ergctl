@@ -264,6 +264,16 @@ impl App {
         };
         let p = Paragraph::new(vec![
             Line::from(vec![
+                Span::raw("remaining  "),
+                Span::styled(
+                    format!("{:.1} Wh", s.energy_now),
+                    Style::default()
+                        .fg(Color::Green)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(format!("  ({}%)", s.capacity)),
+            ]),
+            Line::from(vec![
                 Span::raw("charge limit  "),
                 Span::styled(
                     format!("{}%", s.charge_limit),

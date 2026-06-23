@@ -86,4 +86,16 @@ pub fn status() {
         .and_then(|d| sysfs::read_trim(&format!("{d}/charge_control_end_threshold")))
         .unwrap_or_default();
     println!("charge limit     : {cl}");
+    if let Some(d) = sysfs::bat_dir() {
+        let e = sysfs::read_u64(&format!("{d}/energy_now")).unwrap_or(0);
+        let wh = if e > 0 {
+            e as f64 / 1e6
+        } else {
+            let c = sysfs::read_u64(&format!("{d}/charge_now")).unwrap_or(0) as f64;
+            let v = sysfs::read_u64(&format!("{d}/voltage_now")).unwrap_or(0) as f64;
+            c * v / 1e12
+        };
+        let cap = sysfs::read_trim(&format!("{d}/capacity")).unwrap_or_default();
+        println!("remaining        : {wh:.1} Wh ({cap}%)");
+    }
 }

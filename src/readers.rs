@@ -12,6 +12,7 @@ pub struct Snapshot {
     pub capacity: u32,
     pub bat_status: String,
     pub charge_limit: u32,
+    pub energy_now: f64,    // Wh remaining
     pub energy_full: f64,   // Wh
     pub energy_design: f64, // Wh
     pub cycles: u32,
@@ -73,6 +74,15 @@ pub fn read() -> Snapshot {
     let charge_now = bat_u64(&bat, "charge_now") as f64; // µAh
     let charge_full = bat_u64(&bat, "charge_full") as f64;
     let charge_design = bat_u64(&bat, "charge_full_design") as f64;
+    // Prefer energy_now (µWh) if the battery reports it; else charge_now·voltage.
+    let energy_now = {
+        let e = bat_u64(&bat, "energy_now") as f64;
+        if e > 0.0 {
+            e / 1e6
+        } else {
+            charge_now * volt / 1e12
+        }
+    };
     let status = bat
         .as_ref()
         .and_then(|d| sysfs::read_trim(&format!("{d}/status")))
@@ -91,6 +101,7 @@ pub fn read() -> Snapshot {
         capacity: bat_u64(&bat, "capacity") as u32,
         bat_status: status,
         charge_limit: bat_u64(&bat, "charge_control_end_threshold") as u32,
+        energy_now,
         energy_full: charge_full * volt / 1e12,
         energy_design: charge_design * volt / 1e12,
         cycles: bat_u64(&bat, "cycle_count") as u32,

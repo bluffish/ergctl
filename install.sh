@@ -8,6 +8,16 @@ set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"
 BUILD_USER="${SUDO_USER:-root}"
 
+# Prerequisite: NVIDIA RTD3 must be enabled or the dGPU can never reach D3cold.
+# That's provided by the nvidia-laptop-power-cfg package (modprobe + udev).
+if ! pacman -Q nvidia-laptop-power-cfg >/dev/null 2>&1; then
+  echo "WARNING: 'nvidia-laptop-power-cfg' is not installed."
+  echo "         It enables NVIDIA RTD3 (DynamicPowerManagement + runtime PM);"
+  echo "         without it the dGPU will NOT reach D3cold no matter what ergctl does."
+  echo "         Install it first (AUR), then re-run this script."
+  echo
+fi
+
 echo "==> Building ergctl (as $BUILD_USER)"
 sudo -u "$BUILD_USER" env -C "$DIR" cargo build --release
 

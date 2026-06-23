@@ -1,4 +1,4 @@
-# Maintainer: bowen <yunyang@gmail.com>
+# Maintainer: bowen <bowenymail@gmail.com>
 
 pkgname=ergctl
 pkgver=0.2.0
@@ -6,7 +6,10 @@ pkgrel=1
 pkgdesc="Power cockpit for the ASUS ProArt P16 — CLI + TUI (battery/AC/turbo)"
 arch=('x86_64')
 license=('MIT')
-depends=('systemd')
+depends=('systemd'
+         # enables NVIDIA RTD3 (DynamicPowerManagement + runtime PM) — without it
+         # the dGPU can't reach D3cold, so it's a hard prerequisite for dGPU sleep.
+         'nvidia-laptop-power-cfg')
 optdepends=('tlp: deep power tunables (PCIe/USB/disk/wifi)'
             'asusctl: fan curves and keyboard control')
 # cardwire intentionally NOT a dependency — ergctl relies on NVIDIA RTD3 + the

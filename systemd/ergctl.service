@@ -1,8 +1,6 @@
 [Unit]
 Description=ergctl power mode controller (apply battery/AC/turbo state)
-# cardwire must be up so we can drive GPU mode.
-After=cardwired.service multi-user.target
-Wants=cardwired.service
+After=multi-user.target
 # Don't fight tlp's own apply on boot.
 After=tlp.service
 

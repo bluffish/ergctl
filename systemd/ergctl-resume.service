@@ -1,7 +1,10 @@
 [Unit]
 Description=Re-apply ergctl power mode after resume
-# Sleep can reset GPU/profile state — re-assert ours on wake.
+# Run AFTER device resume / nvidia-resume completes, so 'ergctl apply' (which
+# re-removes any reappeared dGPU audio function) sees the post-resume state.
 After=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+After=systemd-suspend.service systemd-hibernate.service systemd-hybrid-sleep.service
+After=nvidia-resume.service
 
 [Service]
 Type=oneshot

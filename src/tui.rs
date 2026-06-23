@@ -1,6 +1,6 @@
 //! ratatui cockpit: live draw + status, with one-key control of the core knobs.
 
-use crate::{apply, config, readers, readers::Snapshot, sysfs};
+use crate::{apply, audioguard, config, readers, readers::Snapshot, readers::Services, sysfs};
 use std::io;
 use std::time::{Duration, Instant};
 
@@ -25,6 +25,8 @@ pub fn run() -> io::Result<()> {
 
 struct App {
     snap: Snapshot,
+    svc: Services,   // refreshed every ~10 ticks (systemctl forks are costly)
+    svc_ticks: u32,
     history: Vec<u64>, // draw in centi-watts, for the sparkline
     soc_w: f64,
     last_rapl: u64,
@@ -38,6 +40,8 @@ impl App {
         let last_rapl = snap.rapl_uj;
         App {
             snap,
+            svc: readers::read_services(),
+            svc_ticks: 0,
             history: Vec::new(),
             soc_w: 0.0,
             last_rapl,
@@ -78,6 +82,11 @@ impl App {
             self.history.remove(0);
         }
         self.snap = snap;
+        // Refresh service health roughly every 10s, not every tick.
+        self.svc_ticks = self.svc_ticks.wrapping_add(1);
+        if self.svc_ticks % 10 == 0 {
+            self.svc = readers::read_services();
+        }
     }
 
     fn refresh(&mut self) {
@@ -109,13 +118,13 @@ impl App {
                 self.refresh();
             }
             KeyCode::Char('g') => {
-                let to = if self.snap.gpu_mode.eq_ignore_ascii_case("integrated") {
-                    "hybrid"
+                // Toggle audio-guard. Turning it OFF rescans the bus, which wakes
+                // the dGPU — fine for an explicit keypress.
+                if self.snap.audio_guard {
+                    audioguard::off();
                 } else {
-                    "integrated"
-                };
-                sysfs::cardwire_set(to);
-                sysfs::set_service("nvidia-powerd", to == "hybrid");
+                    audioguard::on();
+                }
                 self.refresh();
             }
             KeyCode::Char(']') => self.bump_charge(5),
@@ -236,9 +245,9 @@ impl App {
             format!("{} (asleep)", s.dgpu_state)
         };
         let p = Paragraph::new(vec![
-            kv("mode", &s.gpu_mode),
             kv("dGPU", &dgpu),
-            kv("RTX 4070", if s.dgpu_awake() { "drawing power" } else { "D3cold" }),
+            kv("RTX 4070", if s.dgpu_awake() { "drawing power" } else { "D3cold (off)" }),
+            kv("pm", "RTD3 + guards"),
         ])
         .block(Block::bordered().title("GPU"));
         f.render_widget(p, area);
@@ -284,11 +293,9 @@ impl App {
         let s = &self.snap;
         let stack = Line::from(vec![
             Span::raw("stack  "),
-            ok_span("tlp", s.tlp_ok),
+            ok_span("tlp", self.svc.tlp),
             Span::raw(" "),
-            ok_span("asusd", s.asusd_ok),
-            Span::raw(" "),
-            ok_span("cardwire", s.cardwire_ok),
+            ok_span("asusd", self.svc.asusd),
         ]);
         let p = Paragraph::new(vec![
             kv("profile", &s.profile),
@@ -309,7 +316,7 @@ impl App {
     }
 
     fn footer(&self, f: &mut Frame, area: Rect) {
-        let help = "[a]uto  [t]urbo   [p]rofile  [b]oost  [g]pu   [ ] charge   -/= bright   [q]uit";
+        let help = "[a]uto [t]urbo  [p]rofile [b]oost  [g] audio-guard  [ ] charge  -/= bright  [q]uit";
         let p = Paragraph::new(Line::from(help))
             .style(Style::default().fg(Color::DarkGray))
             .block(Block::bordered());

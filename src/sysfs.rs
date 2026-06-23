@@ -213,34 +213,7 @@ pub fn set_charge_limit(v: u32) {
     }
 }
 
-// -------------------------------------------------------------- cardwire / svc
-
-pub fn cardwire_set(mode: &str) {
-    if let Err(e) = Command::new("cardwire").arg("set").arg(mode).status() {
-        eprintln!("ergctl: cardwire set {mode}: {e}");
-    }
-}
-
-pub fn cardwire_get() -> String {
-    Command::new("cardwire")
-        .arg("get")
-        .output()
-        .ok()
-        .and_then(|o| String::from_utf8(o.stdout).ok())
-        .and_then(|s| s.lines().next().map(str::to_string))
-        .map(|l| l.replace("Current Mode:", "").trim().to_string())
-        .filter(|s| !s.is_empty())
-        .unwrap_or_else(|| "unknown".to_string())
-}
-
-/// Start/stop a systemd unit. Used for nvidia-powerd, which otherwise holds the
-/// dGPU at D0 even with no clients (defeats D3cold on battery).
-pub fn set_service(name: &str, want_active: bool) {
-    let action = if want_active { "start" } else { "stop" };
-    if let Err(e) = Command::new("systemctl").arg(action).arg(name).status() {
-        eprintln!("ergctl: systemctl {action} {name}: {e}");
-    }
-}
+// ----------------------------------------------------------------- services
 
 pub fn service_active(name: &str) -> bool {
     Command::new("systemctl")

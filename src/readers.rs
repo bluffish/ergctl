@@ -24,16 +24,26 @@ pub struct Snapshot {
     pub cpu_mhz: u32,
     pub cpu_temp: f64,
     // gpu
-    pub gpu_mode: String,
     pub dgpu_state: String,
     // system
     pub fan_rpm: u32,
     pub brightness_pct: u32,
-    pub tlp_ok: bool,
-    pub asusd_ok: bool,
-    pub cardwire_ok: bool,
     pub gpu_guard: bool,
     pub audio_guard: bool,
+}
+
+/// Service health — refreshed infrequently (each check is a systemctl fork, which
+/// we don't want to spawn every tick on battery). Read via read_services().
+pub struct Services {
+    pub tlp: bool,
+    pub asusd: bool,
+}
+
+pub fn read_services() -> Services {
+    Services {
+        tlp: sysfs::service_active("tlp"),
+        asusd: sysfs::service_active("asusd"),
+    }
 }
 
 impl Snapshot {
@@ -93,13 +103,9 @@ pub fn read() -> Snapshot {
             .unwrap_or_default(),
         cpu_mhz: sysfs::avg_cpu_mhz(),
         cpu_temp: sysfs::cpu_temp_c(),
-        gpu_mode: sysfs::cardwire_get(),
         dgpu_state: sysfs::dgpu_runtime_status(),
         fan_rpm: sysfs::fan_rpm(),
         brightness_pct: sysfs::brightness_pct(),
-        tlp_ok: sysfs::service_active("tlp"),
-        asusd_ok: sysfs::service_active("asusd"),
-        cardwire_ok: sysfs::service_active("cardwired"),
         gpu_guard: crate::gpuguard::is_on(),
         audio_guard: crate::audioguard::is_on(),
     }

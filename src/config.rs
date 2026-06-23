@@ -3,10 +3,10 @@
 use std::collections::HashMap;
 use std::fs;
 
-/// The knobs that make up one power state.
+/// The knobs that make up one power state. (GPU power is handled by NVIDIA RTD3 +
+/// the audio/gpu guards, not by ergctl switching a GPU mode — so no gpu field.)
 pub struct StateCfg {
     pub profile: String, // ACPI platform_profile: quiet|balanced|performance
-    pub gpu: String,     // cardwire mode: integrated|hybrid|smart
     pub boost: bool,     // CPU turbo
     pub epp: String,     // energy_performance_preference
 }
@@ -51,21 +51,16 @@ impl Config {
             charge_limit: m.get("charge_limit").and_then(|v| v.parse().ok()),
             battery: StateCfg {
                 profile: s("battery_profile", "quiet"),
-                // hybrid (not integrated): RTD3 + gpu-guard keep the dGPU asleep
-                // without the Integrated-mode block that traps it at D0.
-                gpu: s("battery_gpu", "hybrid"),
                 boost: b("battery_boost", false),
                 epp: s("battery_epp", "power"),
             },
             ac: StateCfg {
                 profile: s("ac_profile", "balanced"),
-                gpu: s("ac_gpu", "hybrid"),
                 boost: b("ac_boost", true),
                 epp: s("ac_epp", "balance_performance"),
             },
             turbo: StateCfg {
                 profile: s("turbo_profile", "performance"),
-                gpu: s("turbo_gpu", "hybrid"),
                 boost: b("turbo_boost", true),
                 epp: s("turbo_epp", "performance"),
             },

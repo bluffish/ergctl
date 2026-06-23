@@ -27,13 +27,12 @@ fn apply_state(label: &str, s: &StateCfg) {
     sysfs::set_platform_profile(&s.profile);
     sysfs::set_boost(s.boost);
     sysfs::set_epp(&s.epp);
-    // Keep the dGPU in hybrid (present) and let NVIDIA RTD3 + the gpu-guard keep
-    // it asleep when idle. We deliberately avoid Integrated mode: its hard block
-    // traps the dGPU at D0 if it's switched while awake (RTD3 can never finish).
-    sysfs::cardwire_set(&s.gpu);
+    // GPU power is left to NVIDIA RTD3 + the guards; ergctl does NOT switch a GPU
+    // mode here (cardwire is retired — switching it while the GPU is awake traps
+    // it at D0).
     println!(
-        "[ergctl] {label}: profile={} gpu={} boost={} epp={}",
-        s.profile, s.gpu, s.boost, s.epp
+        "[ergctl] {label}: profile={} boost={} epp={}",
+        s.profile, s.boost, s.epp
     );
 }
 
@@ -43,6 +42,10 @@ pub fn apply_current() {
     if let Some(cl) = cfg.charge_limit {
         sysfs::set_charge_limit(cl);
     }
+    // Backstop: if the dGPU HDMI-audio function re-appeared (boot/resume PCI
+    // re-enumeration), re-remove it so the GPU can D3cold. The udev rule is the
+    // fast path for mid-session re-adds; this covers boot/resume deterministically.
+    crate::audioguard::enforce();
     match read_override().as_str() {
         "turbo" => apply_state("turbo", &cfg.turbo),
         _ if sysfs::on_ac() => apply_state("ac", &cfg.ac),
@@ -74,8 +77,11 @@ pub fn status() {
         sysfs::read_trim("/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference")
             .unwrap_or_default()
     );
-    println!("GPU mode         : {}", sysfs::cardwire_get());
     println!("dGPU power       : {}", sysfs::dgpu_runtime_status());
+    println!(
+        "audio-guard      : {}",
+        if crate::audioguard::is_on() { "on" } else { "off" }
+    );
     let cl = sysfs::bat_dir()
         .and_then(|d| sysfs::read_trim(&format!("{d}/charge_control_end_threshold")))
         .unwrap_or_default();

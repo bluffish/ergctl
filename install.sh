@@ -35,20 +35,12 @@ install -Dm644 "$DIR/udev/99-ergctl.rules"          /usr/lib/udev/rules.d/99-erg
 if [[ -f /etc/ergctl.conf ]]; then
   echo "    keeping existing /etc/ergctl.conf (new default at .conf.new)"
   install -Dm644 "$DIR/config/ergctl.conf" /etc/ergctl.conf.new
-  # Migrate deprecated integrated GPU mode -> hybrid (integrated traps the dGPU at D0).
-  sed -i -E 's/^([[:space:]]*(battery|ac)_gpu[[:space:]]*=[[:space:]]*)integrated/\1hybrid/' /etc/ergctl.conf
 else
   install -Dm644 "$DIR/config/ergctl.conf" /etc/ergctl.conf
 fi
 
 echo "==> Establishing single ownership of the dynamic knobs"
-# 1) cardwire stops auto-switching — ergctl drives it. Keep the experimental
-#    nvidia block OFF (it wedges NVIDIA RTD3, leaving the dGPU stuck at D0).
-cardwire config battery-auto-switch false || true
-cardwire config experimental-nvidia-block false || true
-cardwire config save || true
-
-# 2) Disable TLP's built-in EPP/profile/boost defaults (empty value = leave alone;
+# Disable TLP's built-in EPP/profile/boost defaults (empty value = leave alone;
 #    see the "use PARAMETER=\"\"" note in /etc/tlp.conf). TLP keeps deep tunables.
 TLP_DROPIN=/etc/tlp.d/01-power.conf
 if [[ -f "$TLP_DROPIN" ]]; then
@@ -79,9 +71,11 @@ SOUND_POWER_SAVE_ON_BAT=1
 EOF
 systemctl restart tlp || true
 
-echo "==> Masking nvidia-powerd (Dynamic Boost daemon keeps the dGPU's runtime PM"
-echo "    disabled -> it never reaches D3cold; we don't need Dynamic Boost)"
-systemctl mask --now nvidia-powerd 2>/dev/null || true
+echo "==> Masking nvidia-powerd + cardwired"
+# nvidia-powerd (Dynamic Boost) keeps the dGPU's runtime PM from reaching D3cold.
+# cardwire is retired: ergctl no longer drives it, and its Integrated-mode block
+# traps the dGPU at D0. Both masked so they can't fight RTD3.
+systemctl mask --now nvidia-powerd cardwired 2>/dev/null || true
 
 echo "==> Enabling GPU guard (Electron/Chromium default to iGPU)"
 /usr/bin/ergctl gpu-guard on || true

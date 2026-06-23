@@ -84,14 +84,14 @@ fn print_help() {
          \x20 (none)   Open the TUI cockpit (when run in a terminal)\n\
          \x20 tui      Open the TUI cockpit explicitly\n\
          \x20 auto     Hand control to automatic battery/AC switching (default mode)\n\
-         \x20 turbo    Force max performance + dGPU, even on battery (sticky until 'auto')\n\
+         \x20 turbo    Force max performance, even on battery (until 'auto' or reboot)\n\
          \x20 status   Print current mode and live power state\n\
          \x20 apply    Re-apply the correct state for the current override + power source\n\
          \x20          (used by the systemd service on boot/resume/power events)\n\
          \x20 gpu-guard {{on|off|status}}  Default GL/EGL to the iGPU so Electron/Chromium\n\
          \x20          apps don't wake the dGPU (prime-run still overrides for games)\n\
-         \x20 audio-guard {{on|off|status}}  Unbind the dGPU's HDMI audio so it stops\n\
-         \x20          pinning the GPU at D0 (no display uses it)\n\n\
+         \x20 audio-guard {{on|off|status}}  Remove the dGPU's HDMI audio function so it\n\
+         \x20          stops pinning the GPU at D0 (off restores it; wakes the dGPU)\n\n\
          CONFIG:\n  /etc/ergctl.conf",
         env!("CARGO_PKG_VERSION")
     );

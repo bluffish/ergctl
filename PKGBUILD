@@ -6,9 +6,11 @@ pkgrel=1
 pkgdesc="Power cockpit for the ASUS ProArt P16 — CLI + TUI (battery/AC/turbo)"
 arch=('x86_64')
 license=('MIT')
-depends=('cardwire' 'systemd')
+depends=('systemd')
 optdepends=('tlp: deep power tunables (PCIe/USB/disk/wifi)'
             'asusctl: fan curves and keyboard control')
+# cardwire intentionally NOT a dependency — ergctl relies on NVIDIA RTD3 + the
+# gpu/audio guards for dGPU power, not cardwire.
 makedepends=('cargo')
 provides=('proart-power')
 conflicts=('proart-power')
@@ -32,9 +34,9 @@ package() {
     install -Dm644 README.md                     "$pkgdir/usr/share/doc/$pkgname/README.md"
 }
 
-# NOTE: the package installs files only. To establish single-ownership
-# (disable cardwire auto-switch + nvidia block, trim the TLP drop-in) and enable
-# the services, run install.sh once, or do it manually:
-#   systemctl enable --now ergctl.service
-#   systemctl enable ergctl-resume.service
-#   cardwire config battery-auto-switch false && cardwire config experimental-nvidia-block false && cardwire config save
+# NOTE: the package installs files only. To establish the full setup (mask
+# nvidia-powerd + cardwired, trim the TLP drop-in, enable gpu-guard + audio-guard,
+# passwordless sudo) run install.sh once. Minimal manual enable:
+#   systemctl enable --now ergctl.service && systemctl enable ergctl-resume.service
+#   systemctl mask --now nvidia-powerd cardwired
+#   ergctl gpu-guard on && ergctl audio-guard on

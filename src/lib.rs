@@ -12,3 +12,4 @@ pub mod gpuguard;
 pub mod readers;
 pub mod sysfs;
 pub mod tui;
+pub mod waybar;

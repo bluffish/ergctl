@@ -1,0 +1,22 @@
+// ergctl power pill for Waybar (HyDE): power draw + dGPU state, left-click = TUI.
+//
+// Install (HyDE):
+//   cp custom-ergctl.jsonc ~/.config/waybar/modules/      # auto-included via the
+//                                                         # modules/*json* glob
+//   add "custom/ergctl" to a group in ~/.config/waybar/config.jsonc
+//       (e.g. the right2 group next to "battery")
+//   append style-snippet.css to ~/.config/waybar/user-style.css
+//   killall -SIGUSR2 waybar
+//
+// NOTE: HyDE may regenerate config.jsonc on a theme/layout switch and drop the
+// "custom/ergctl" placement — re-add it if the pill disappears. The module def
+// (this file) and user-style.css survive.
+{
+    "custom/ergctl": {
+        "exec": "ergctl waybar --watch",
+        "return-type": "json",
+        "format": "{}",
+        "on-click": "kitty --class ergctl-tui -e ergctl",
+        "tooltip": true
+    }
+}

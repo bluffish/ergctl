@@ -1,7 +1,7 @@
 //! ergctl — power cockpit for the ASUS ProArt P16. CLI + TUI frontends over the
 //! ergctl core library.
 
-use ergctl::{apply, audioguard, gpuguard, tui};
+use ergctl::{apply, audioguard, gpuguard, tui, waybar};
 use std::io::IsTerminal;
 use std::process::{exit, Command};
 
@@ -36,6 +36,8 @@ fn main() {
                 exit(1);
             }
         }
+        // Read-only status for a Waybar custom module; no root needed.
+        "waybar" => waybar::emit(args.iter().any(|a| a == "--watch")),
         "gpu-guard" => match args.get(2).map(String::as_str).unwrap_or("status") {
             "on" => {
                 ensure_root();
@@ -86,6 +88,7 @@ fn print_help() {
          \x20 auto     Hand control to automatic battery/AC switching (default mode)\n\
          \x20 turbo    Force max performance, even on battery (until 'auto' or reboot)\n\
          \x20 status   Print current mode and live power state\n\
+         \x20 waybar [--watch]  Emit Waybar JSON (power draw + dGPU state); --watch streams\n\
          \x20 apply    Re-apply the correct state for the current override + power source\n\
          \x20          (used by the systemd service on boot/resume/power events)\n\
          \x20 gpu-guard {{on|off|status}}  Default GL/EGL to the iGPU so Electron/Chromium\n\

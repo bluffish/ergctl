@@ -1,0 +1,9 @@
+/* Append to ~/.config/waybar/user-style.css (HyDE-update-safe).
+   dGPU asleep (D3cold) = theme default; dGPU awake = red alarm. */
+#custom-ergctl {
+    padding: 0 8px;
+}
+#custom-ergctl.dgpu-on {
+    color: #ff5555;
+    font-weight: bold;
+}

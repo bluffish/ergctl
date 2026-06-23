@@ -79,6 +79,10 @@ SOUND_POWER_SAVE_ON_BAT=1
 EOF
 systemctl restart tlp || true
 
+echo "==> Masking nvidia-powerd (Dynamic Boost daemon keeps the dGPU's runtime PM"
+echo "    disabled -> it never reaches D3cold; we don't need Dynamic Boost)"
+systemctl mask --now nvidia-powerd 2>/dev/null || true
+
 echo "==> Enabling GPU guard (Electron/Chromium default to iGPU)"
 /usr/bin/ergctl gpu-guard on || true
 

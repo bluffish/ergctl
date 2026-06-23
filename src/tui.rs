@@ -294,7 +294,14 @@ impl App {
             kv("profile", &s.profile),
             kv("fan", &format!("{} rpm", s.fan_rpm)),
             kv("backlight", &format!("{}%", s.brightness_pct)),
-            kv("gpu-guard", if s.gpu_guard { "on" } else { "off" }),
+            kv(
+                "guards",
+                &format!(
+                    "gpu={} audio={}",
+                    if s.gpu_guard { "on" } else { "off" },
+                    if s.audio_guard { "on" } else { "off" }
+                ),
+            ),
             stack,
         ])
         .block(Block::bordered().title("SYSTEM"));

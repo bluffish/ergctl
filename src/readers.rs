@@ -33,6 +33,7 @@ pub struct Snapshot {
     pub asusd_ok: bool,
     pub cardwire_ok: bool,
     pub gpu_guard: bool,
+    pub audio_guard: bool,
 }
 
 impl Snapshot {
@@ -100,5 +101,6 @@ pub fn read() -> Snapshot {
         asusd_ok: sysfs::service_active("asusd"),
         cardwire_ok: sysfs::service_active("cardwired"),
         gpu_guard: crate::gpuguard::is_on(),
+        audio_guard: crate::audioguard::is_on(),
     }
 }

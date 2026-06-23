@@ -6,6 +6,7 @@
 //! (GPU), the ACPI platform profile, CPU boost, EPP and charge limit.
 
 pub mod apply;
+pub mod audioguard;
 pub mod config;
 pub mod gpuguard;
 pub mod readers;

@@ -1,7 +1,7 @@
 //! ergctl — power cockpit for the ASUS ProArt P16. CLI + TUI frontends over the
 //! ergctl core library.
 
-use ergctl::{apply, gpuguard, tui};
+use ergctl::{apply, audioguard, gpuguard, tui};
 use std::io::IsTerminal;
 use std::process::{exit, Command};
 
@@ -51,6 +51,21 @@ fn main() {
                 exit(2);
             }
         },
+        "audio-guard" => match args.get(2).map(String::as_str).unwrap_or("status") {
+            "on" => {
+                ensure_root();
+                audioguard::on();
+            }
+            "off" => {
+                ensure_root();
+                audioguard::off();
+            }
+            "status" => audioguard::status(),
+            other => {
+                eprintln!("ergctl: audio-guard: unknown '{other}' (use on|off|status)");
+                exit(2);
+            }
+        },
         "-h" | "--help" | "help" => print_help(),
         "-V" | "--version" => println!("ergctl {}", env!("CARGO_PKG_VERSION")),
         other => {
@@ -74,7 +89,9 @@ fn print_help() {
          \x20 apply    Re-apply the correct state for the current override + power source\n\
          \x20          (used by the systemd service on boot/resume/power events)\n\
          \x20 gpu-guard {{on|off|status}}  Default GL/EGL to the iGPU so Electron/Chromium\n\
-         \x20          apps don't wake the dGPU (prime-run still overrides for games)\n\n\
+         \x20          apps don't wake the dGPU (prime-run still overrides for games)\n\
+         \x20 audio-guard {{on|off|status}}  Unbind the dGPU's HDMI audio so it stops\n\
+         \x20          pinning the GPU at D0 (no display uses it)\n\n\
          CONFIG:\n  /etc/ergctl.conf",
         env!("CARGO_PKG_VERSION")
     );

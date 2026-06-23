@@ -86,6 +86,9 @@ systemctl mask --now nvidia-powerd 2>/dev/null || true
 echo "==> Enabling GPU guard (Electron/Chromium default to iGPU)"
 /usr/bin/ergctl gpu-guard on || true
 
+echo "==> Enabling audio guard (unbind dGPU HDMI audio that pins the GPU at D0)"
+/usr/bin/ergctl audio-guard on || true
+
 echo "==> Allowing passwordless sudo for ergctl (scoped to the binary)"
 SUDOERS=/etc/sudoers.d/ergctl
 printf '%s ALL=(root) NOPASSWD: /usr/bin/ergctl\n' "$BUILD_USER" > "$SUDOERS"

@@ -19,9 +19,9 @@ automatically on AC/battery, and exposes a TUI and a Waybar module.
 
 ### Requirements
 
-- **`nvidia-laptop-power-cfg`** — enables NVIDIA RTD3 (DynamicPowerManagement +
-  runtime PM). **Required**: without it the dGPU can't reach D3cold, so nothing
-  here can put it to sleep.
+- **`nvidia-laptop-power-cfg`** (in the [`g14`](https://github.com/Frogging-Family/community-db)
+  repo) — enables NVIDIA RTD3 (DynamicPowerManagement + runtime PM). **Required**:
+  without it the dGPU can't reach D3cold, so nothing here can put it to sleep.
 - Optional: `tlp` (deep tunables), `asusctl` (fans/keyboard).
 
 ```sh

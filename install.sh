@@ -14,7 +14,7 @@ if ! pacman -Q nvidia-laptop-power-cfg >/dev/null 2>&1; then
   echo "WARNING: 'nvidia-laptop-power-cfg' is not installed."
   echo "         It enables NVIDIA RTD3 (DynamicPowerManagement + runtime PM);"
   echo "         without it the dGPU will NOT reach D3cold no matter what ergctl does."
-  echo "         Install it first (AUR), then re-run this script."
+  echo "         Install it first (g14 repo: pacman -S nvidia-laptop-power-cfg), then re-run."
   echo
 fi
 

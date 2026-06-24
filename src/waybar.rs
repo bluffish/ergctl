@@ -28,10 +28,17 @@ fn line() -> String {
         .unwrap_or(0) as f64;
     let draw = cur * volt / 1e12;
 
-    let dgpu = sysfs::dgpu_runtime_status(); // "suspended" = asleep
-    let asleep = dgpu == "suspended";
-    let gpu_txt = if asleep { "off" } else { "ON" };
-    let class = if asleep { "dgpu-off" } else { "dgpu-on" };
+    // ON (red alarm) only when the dGPU is genuinely drawing power. "suspended"
+    // (D3cold), "?" (file gone = removed from the bus), and anything else are off.
+    let dgpu = sysfs::dgpu_runtime_status();
+    let awake = dgpu == "active";
+    let gpu_txt = if awake { "ON" } else { "off" };
+    let class = if awake { "dgpu-on" } else { "dgpu-off" };
+    let state = match dgpu.as_str() {
+        "active" => "awake",
+        "suspended" => "asleep",
+        _ => "off (removed/blocked)",
+    };
 
     let power = if ac {
         format!("{PLUG} AC")
@@ -41,12 +48,9 @@ fn line() -> String {
     let text = format!("{power} · {CHIP} {gpu_txt}");
 
     let tooltip = if ac {
-        format!("on AC\ndGPU: {dgpu} ({})", if asleep { "asleep" } else { "awake" })
+        format!("on AC\ndGPU: {state}")
     } else {
-        format!(
-            "draw {draw:.1} W\ndGPU: {dgpu} ({})",
-            if asleep { "asleep" } else { "awake" }
-        )
+        format!("draw {draw:.1} W\ndGPU: {state}")
     };
 
     format!(

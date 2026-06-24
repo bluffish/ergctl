@@ -213,35 +213,6 @@ pub fn set_charge_limit(v: u32) {
     }
 }
 
-// --------------------------------------------------- SoC power limits (asus-armoury)
-
-const ARMOURY: &str = "/sys/class/firmware-attributes/asus-armoury/attributes";
-
-/// Write one asus-armoury attribute, clamped to its firmware min/max. No-op if absent.
-fn write_armoury(attr: &str, val: u32) {
-    let dir = format!("{ARMOURY}/{attr}");
-    let cur = format!("{dir}/current_value");
-    if !Path::new(&cur).exists() {
-        return;
-    }
-    let min = read_u64(&format!("{dir}/min_value")).unwrap_or(0) as u32;
-    let max = read_u64(&format!("{dir}/max_value")).unwrap_or(u32::MAX as u64) as u32;
-    write_file(&cur, &val.clamp(min, max).to_string());
-}
-
-/// Set the SoC sustained/long/short power limits (watts) via asus-armoury.
-/// SPL bounds the indefinite package power (what `boost off` does NOT cap).
-pub fn set_ppt(spl: u32, sppt: u32, fppt: u32) {
-    write_armoury("ppt_pl1_spl", spl);
-    write_armoury("ppt_pl2_sppt", sppt);
-    write_armoury("ppt_pl3_fppt", fppt);
-}
-
-/// Current SPL (for status display); None if unsupported.
-pub fn ppt_spl() -> Option<u32> {
-    read_u64(&format!("{ARMOURY}/ppt_pl1_spl/current_value")).map(|v| v as u32)
-}
-
 // ----------------------------------------------------------------- services
 
 pub fn service_active(name: &str) -> bool {

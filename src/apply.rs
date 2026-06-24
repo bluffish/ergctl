@@ -27,21 +27,12 @@ fn apply_state(label: &str, s: &StateCfg) {
     sysfs::set_platform_profile(&s.profile);
     sysfs::set_boost(s.boost);
     sysfs::set_epp(&s.epp);
-    // SoC power cap (asus-armoury) — bounds sustained package power, which boost-off
-    // does not. Written after the profile so it isn't reset by a profile change.
-    if let Some((spl, sppt, fppt)) = s.ppt {
-        sysfs::set_ppt(spl, sppt, fppt);
-    }
-    // OLED backlight (uniform dim — color-accuracy safe).
-    if let Some(b) = s.brightness {
-        sysfs::set_brightness_pct(b);
-    }
     // GPU power is left to NVIDIA RTD3 + the guards; ergctl does NOT switch a GPU
     // mode here (cardwire is retired — switching it while the GPU is awake traps
     // it at D0).
     println!(
-        "[ergctl] {label}: profile={} boost={} epp={} ppt={:?} brightness={:?}",
-        s.profile, s.boost, s.epp, s.ppt, s.brightness
+        "[ergctl] {label}: profile={} boost={} epp={}",
+        s.profile, s.boost, s.epp
     );
 }
 
@@ -86,9 +77,6 @@ pub fn status() {
         sysfs::read_trim("/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference")
             .unwrap_or_default()
     );
-    if let Some(spl) = sysfs::ppt_spl() {
-        println!("SoC SPL (W)      : {spl}");
-    }
     println!("dGPU power       : {}", sysfs::dgpu_runtime_status());
     println!(
         "audio-guard      : {}",

@@ -6,11 +6,9 @@ use std::fs;
 /// The knobs that make up one power state. (GPU power is handled by NVIDIA RTD3 +
 /// the audio/gpu guards, not by ergctl switching a GPU mode — so no gpu field.)
 pub struct StateCfg {
-    pub profile: String,                  // ACPI platform_profile: quiet|balanced|performance
-    pub boost: bool,                      // CPU turbo
-    pub epp: String,                      // energy_performance_preference
-    pub ppt: Option<(u32, u32, u32)>,     // asus-armoury SoC power: (SPL, SPPT, FPPT) watts; None = leave
-    pub brightness: Option<u32>,          // OLED backlight %, None = leave alone
+    pub profile: String, // ACPI platform_profile: quiet|balanced|performance
+    pub boost: bool,     // CPU turbo
+    pub epp: String,     // energy_performance_preference
 }
 
 pub struct Config {
@@ -48,48 +46,22 @@ impl Config {
                 .map(|v| matches!(v.as_str(), "true" | "1" | "on" | "yes"))
                 .unwrap_or(d)
         };
-        // PPT: "SPL SPPT FPPT" (3 ints) -> Some((..)); empty/"off"/absent uses default.
-        let ppt = |k: &str, d: Option<(u32, u32, u32)>| match m.get(k).map(|v| v.trim()) {
-            Some("") | Some("off") | Some("none") => None,
-            Some(v) => {
-                let p: Vec<u32> = v.split_whitespace().filter_map(|x| x.parse().ok()).collect();
-                if p.len() == 3 {
-                    Some((p[0], p[1], p[2]))
-                } else {
-                    d
-                }
-            }
-            None => d,
-        };
-        // brightness %: int -> Some; empty/"off"/absent uses default.
-        let pct = |k: &str, d: Option<u32>| match m.get(k).map(|v| v.trim()) {
-            Some("") | Some("off") | Some("none") => None,
-            Some(v) => v.parse().ok().map(Some).unwrap_or(d),
-            None => d,
-        };
-
         Config {
             charge_limit: m.get("charge_limit").and_then(|v| v.parse().ok()),
             battery: StateCfg {
                 profile: s("battery_profile", "quiet"),
                 boost: b("battery_boost", false),
                 epp: s("battery_epp", "power"),
-                ppt: ppt("battery_ppt", Some((15, 35, 35))),
-                brightness: pct("battery_brightness", Some(40)),
             },
             ac: StateCfg {
                 profile: s("ac_profile", "balanced"),
                 boost: b("ac_boost", true),
                 epp: s("ac_epp", "balance_performance"),
-                ppt: ppt("ac_ppt", Some((80, 80, 80))),
-                brightness: pct("ac_brightness", None),
             },
             turbo: StateCfg {
                 profile: s("turbo_profile", "performance"),
                 boost: b("turbo_boost", true),
                 epp: s("turbo_epp", "performance"),
-                ppt: ppt("turbo_ppt", Some((80, 80, 80))),
-                brightness: pct("turbo_brightness", None),
             },
         }
     }

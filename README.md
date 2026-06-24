@@ -7,10 +7,9 @@ automatically on AC/battery, and exposes a TUI and a Waybar module.
 ## Features
 
 - **Auto power states** — applies a coherent profile on every plug/unplug, boot,
-  and resume: ACPI platform profile, CPU boost, EPP, **SoC power cap (PPT, via
-  asus-armoury)**, **OLED brightness**, and battery charge limit. ergctl is the
-  sole owner — `install.sh` disables asusd's own AC/battery profile switching so
-  the two don't race.
+  and resume: ACPI platform profile, CPU boost, EPP, and battery charge limit.
+  ergctl is the sole owner — `install.sh` disables asusd's own AC/battery profile
+  switching so the two don't race.
 - **dGPU sleep** — keeps the NVIDIA dGPU in D3cold via native RTD3 plus two guards:
   - `gpu-guard` points GL/EGL/Vulkan at the iGPU so apps don't wake the dGPU.
   - `audio-guard` removes the dGPU HDMI-audio function that otherwise pins it at D0.

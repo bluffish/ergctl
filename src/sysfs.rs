@@ -250,3 +250,43 @@ pub fn cardwire_get() -> String {
         .filter(|s| !s.is_empty())
         .unwrap_or_else(|| "unknown".into())
 }
+
+// ------------------------------------------------------------- AMD iGPU DPM
+
+/// Path to the AMD iGPU's DPM control node (found by vendor 0x1002, so it survives
+/// card-number reordering across boots). None if no AMD GPU exposes it.
+fn amd_dpm_path() -> Option<String> {
+    for e in fs::read_dir("/sys/class/drm").ok()?.flatten() {
+        let name = e.file_name();
+        let name = name.to_string_lossy();
+        let is_card = name
+            .strip_prefix("card")
+            .map(|r| !r.is_empty() && r.chars().all(|c| c.is_ascii_digit()))
+            .unwrap_or(false);
+        if !is_card {
+            continue;
+        }
+        let dev = format!("/sys/class/drm/{name}/device");
+        if read_trim(&format!("{dev}/vendor")).as_deref() == Some("0x1002") {
+            let p = format!("{dev}/power_dpm_force_performance_level");
+            if Path::new(&p).exists() {
+                return Some(p);
+            }
+        }
+    }
+    None
+}
+
+/// Force the AMD iGPU DPM level: auto (ramp freely) | low (cap clocks) | high.
+pub fn set_igpu_dpm(level: &str) {
+    if let Some(p) = amd_dpm_path() {
+        write_file(&p, level);
+    }
+}
+
+/// Current AMD iGPU DPM level (for status).
+pub fn igpu_dpm() -> String {
+    amd_dpm_path()
+        .and_then(|p| read_trim(&p))
+        .unwrap_or_else(|| "?".into())
+}

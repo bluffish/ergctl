@@ -31,9 +31,11 @@ fn apply_state(label: &str, s: &StateCfg) {
     // on AC. With cardwire's experimental_nvidia_block on, integrated blocks the
     // proprietary /dev/nvidia* nodes too, so nothing can wake it; RTD3 then D3colds it.
     sysfs::cardwire_set(&s.gpu_mode);
+    // AMD iGPU: cap its clocks (low) on battery, let it ramp (auto) on AC/turbo.
+    sysfs::set_igpu_dpm(&s.igpu_dpm);
     println!(
-        "[ergctl] {label}: profile={} boost={} epp={} gpu={}",
-        s.profile, s.boost, s.epp, s.gpu_mode
+        "[ergctl] {label}: profile={} boost={} epp={} gpu={} igpu_dpm={}",
+        s.profile, s.boost, s.epp, s.gpu_mode, s.igpu_dpm
     );
 }
 
@@ -79,6 +81,7 @@ pub fn status() {
             .unwrap_or_default()
     );
     println!("GPU mode         : {}", sysfs::cardwire_get());
+    println!("iGPU DPM         : {}", sysfs::igpu_dpm());
     println!("dGPU power       : {}", sysfs::dgpu_runtime_status());
     println!(
         "audio-guard      : {}",

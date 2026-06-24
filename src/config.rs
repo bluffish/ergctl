@@ -10,6 +10,7 @@ pub struct StateCfg {
     pub boost: bool,      // CPU turbo
     pub epp: String,      // energy_performance_preference
     pub gpu_mode: String, // cardwire mode: integrated (dGPU blocked) | hybrid (available)
+    pub igpu_dpm: String, // AMD iGPU DPM: auto (ramp) | low (cap clocks) | high
 }
 
 pub struct Config {
@@ -56,18 +57,22 @@ impl Config {
                 // integrated = cardwire blocks the dGPU on battery (with
                 // experimental_nvidia_block on, nothing can open/wake it).
                 gpu_mode: s("battery_gpu", "integrated"),
+                // cap the AMD iGPU clocks on battery.
+                igpu_dpm: s("battery_igpu_dpm", "low"),
             },
             ac: StateCfg {
                 profile: s("ac_profile", "balanced"),
                 boost: b("ac_boost", true),
                 epp: s("ac_epp", "balance_performance"),
                 gpu_mode: s("ac_gpu", "hybrid"),
+                igpu_dpm: s("ac_igpu_dpm", "auto"),
             },
             turbo: StateCfg {
                 profile: s("turbo_profile", "performance"),
                 boost: b("turbo_boost", true),
                 epp: s("turbo_epp", "performance"),
                 gpu_mode: s("turbo_gpu", "hybrid"),
+                igpu_dpm: s("turbo_igpu_dpm", "auto"),
             },
         }
     }

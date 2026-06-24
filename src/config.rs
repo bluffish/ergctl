@@ -53,15 +53,15 @@ impl Config {
                 profile: s("battery_profile", "quiet"),
                 boost: b("battery_boost", false),
                 epp: s("battery_epp", "power"),
-                // integrated = cardwire blocks the dGPU on battery (with
-                // experimental_nvidia_block on, nothing can open/wake it).
-                gpu_mode: s("battery_gpu", "integrated"),
+                // smart = cardwire keeps the dGPU blocked (iGPU only) and unblocks
+                // it on-demand when an app actually opens the GPU, then re-blocks.
+                gpu_mode: s("battery_gpu", "smart"),
             },
             ac: StateCfg {
                 profile: s("ac_profile", "balanced"),
                 boost: b("ac_boost", true),
                 epp: s("ac_epp", "balance_performance"),
-                gpu_mode: s("ac_gpu", "hybrid"),
+                gpu_mode: s("ac_gpu", "smart"),
             },
             turbo: StateCfg {
                 profile: s("turbo_profile", "performance"),

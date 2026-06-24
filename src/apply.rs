@@ -27,12 +27,16 @@ fn apply_state(label: &str, s: &StateCfg) {
     sysfs::set_platform_profile(&s.profile);
     sysfs::set_boost(s.boost);
     sysfs::set_epp(&s.epp);
-    // GPU power is left to NVIDIA RTD3 + the guards; ergctl does NOT switch a GPU
-    // mode here (cardwire is retired — switching it while the GPU is awake traps
-    // it at D0).
+    // Hard dGPU on/off: on battery (present=false) the dGPU is REMOVED from the PCI
+    // bus so nothing can wake it; AC/turbo rescan it back. (Guards + RTD3 still apply
+    // whenever it is present.)
+    sysfs::set_dgpu_present(s.dgpu_present);
     println!(
-        "[ergctl] {label}: profile={} boost={} epp={}",
-        s.profile, s.boost, s.epp
+        "[ergctl] {label}: profile={} boost={} epp={} dgpu={}",
+        s.profile,
+        s.boost,
+        s.epp,
+        if s.dgpu_present { "present" } else { "removed" }
     );
 }
 
@@ -77,7 +81,14 @@ pub fn status() {
         sysfs::read_trim("/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference")
             .unwrap_or_default()
     );
-    println!("dGPU power       : {}", sysfs::dgpu_runtime_status());
+    println!(
+        "dGPU             : {}",
+        if sysfs::dgpu_exists() {
+            sysfs::dgpu_runtime_status()
+        } else {
+            "removed (off)".to_string()
+        }
+    );
     println!(
         "audio-guard      : {}",
         if crate::audioguard::is_on() { "on" } else { "off" }

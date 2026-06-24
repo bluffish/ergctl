@@ -6,9 +6,10 @@ use std::fs;
 /// The knobs that make up one power state. (GPU power is handled by NVIDIA RTD3 +
 /// the audio/gpu guards, not by ergctl switching a GPU mode — so no gpu field.)
 pub struct StateCfg {
-    pub profile: String, // ACPI platform_profile: quiet|balanced|performance
-    pub boost: bool,     // CPU turbo
-    pub epp: String,     // energy_performance_preference
+    pub profile: String,      // ACPI platform_profile: quiet|balanced|performance
+    pub boost: bool,          // CPU turbo
+    pub epp: String,          // energy_performance_preference
+    pub dgpu_present: bool,    // true = ensure dGPU on the bus; false = remove it (hard off)
 }
 
 pub struct Config {
@@ -52,16 +53,22 @@ impl Config {
                 profile: s("battery_profile", "quiet"),
                 boost: b("battery_boost", false),
                 epp: s("battery_epp", "power"),
+                // default OFF on battery: physically remove the dGPU so nothing can
+                // wake it. Set battery_dgpu = on to keep it (RTD3-asleep, wakeable).
+                dgpu_present: b("battery_dgpu", false),
             },
             ac: StateCfg {
                 profile: s("ac_profile", "balanced"),
                 boost: b("ac_boost", true),
                 epp: s("ac_epp", "balance_performance"),
+                dgpu_present: b("ac_dgpu", true),
             },
             turbo: StateCfg {
                 profile: s("turbo_profile", "performance"),
                 boost: b("turbo_boost", true),
                 epp: s("turbo_epp", "performance"),
+                // turbo brings the dGPU back even on battery.
+                dgpu_present: b("turbo_dgpu", true),
             },
         }
     }

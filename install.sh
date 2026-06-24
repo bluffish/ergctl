@@ -95,6 +95,12 @@ ASUSD_RON=/etc/asusd/asusd.ron
 if [[ -f "$ASUSD_RON" ]]; then
   cp -a "$ASUSD_RON" "${ASUSD_RON}.bak-$(date +%s)"
   sed -i -E 's/(change_platform_profile_on_battery:[[:space:]]*)true/\1false/; s/(change_platform_profile_on_ac:[[:space:]]*)true/\1false/' "$ASUSD_RON"
+  # Sync asusd's stored charge limit to ergctl's config value so asusd never
+  # re-asserts a different threshold (ergctl is the source of truth).
+  CL=$(grep -oE '^[[:space:]]*charge_limit[[:space:]]*=[[:space:]]*[0-9]+' /etc/ergctl.conf 2>/dev/null | grep -oE '[0-9]+' | tail -1)
+  if [[ -n "$CL" ]]; then
+    sed -i -E "s/(charge_control_end_threshold:[[:space:]]*)[0-9]+/\1$CL/" "$ASUSD_RON"
+  fi
   systemctl restart asusd 2>/dev/null || true
 fi
 

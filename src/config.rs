@@ -6,9 +6,10 @@ use std::fs;
 /// The knobs that make up one power state. (GPU power is handled by NVIDIA RTD3 +
 /// the audio/gpu guards, not by ergctl switching a GPU mode — so no gpu field.)
 pub struct StateCfg {
-    pub profile: String, // ACPI platform_profile: quiet|balanced|performance
-    pub boost: bool,     // CPU turbo
-    pub epp: String,     // energy_performance_preference
+    pub profile: String,  // ACPI platform_profile: quiet|balanced|performance
+    pub boost: bool,      // CPU turbo
+    pub epp: String,      // energy_performance_preference
+    pub gpu_mode: String, // cardwire mode: integrated (dGPU blocked) | hybrid (available)
 }
 
 pub struct Config {
@@ -52,16 +53,21 @@ impl Config {
                 profile: s("battery_profile", "quiet"),
                 boost: b("battery_boost", false),
                 epp: s("battery_epp", "power"),
+                // integrated = cardwire blocks the dGPU on battery (with
+                // experimental_nvidia_block on, nothing can open/wake it).
+                gpu_mode: s("battery_gpu", "integrated"),
             },
             ac: StateCfg {
                 profile: s("ac_profile", "balanced"),
                 boost: b("ac_boost", true),
                 epp: s("ac_epp", "balance_performance"),
+                gpu_mode: s("ac_gpu", "hybrid"),
             },
             turbo: StateCfg {
                 profile: s("turbo_profile", "performance"),
                 boost: b("turbo_boost", true),
                 epp: s("turbo_epp", "performance"),
+                gpu_mode: s("turbo_gpu", "hybrid"),
             },
         }
     }

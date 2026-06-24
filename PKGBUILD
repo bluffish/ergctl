@@ -9,11 +9,11 @@ license=('MIT')
 depends=('systemd'
          # enables NVIDIA RTD3 (DynamicPowerManagement + runtime PM) — without it
          # the dGPU can't reach D3cold, so it's a hard prerequisite for dGPU sleep.
-         'nvidia-laptop-power-cfg')
+         'nvidia-laptop-power-cfg'
+         # ergctl drives `cardwire set integrated|hybrid` to block/expose the dGPU.
+         'cardwire')
 optdepends=('tlp: deep power tunables (PCIe/USB/disk/wifi)'
             'asusctl: fan curves and keyboard control')
-# cardwire intentionally NOT a dependency — ergctl relies on NVIDIA RTD3 + the
-# gpu/audio guards for dGPU power, not cardwire.
 makedepends=('cargo')
 provides=('proart-power')
 conflicts=('proart-power')

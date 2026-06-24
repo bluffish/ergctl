@@ -81,11 +81,20 @@ SOUND_POWER_SAVE_ON_BAT=1
 EOF
 systemctl restart tlp || true
 
-echo "==> Masking nvidia-powerd + cardwired"
-# nvidia-powerd (Dynamic Boost) keeps the dGPU's runtime PM from reaching D3cold.
-# cardwire is retired: ergctl no longer drives it, and its Integrated-mode block
-# traps the dGPU at D0. Both masked so they can't fight RTD3.
-systemctl mask --now nvidia-powerd cardwired 2>/dev/null || true
+echo "==> Masking nvidia-powerd (keeps dGPU runtime PM from reaching D3cold)"
+systemctl mask --now nvidia-powerd 2>/dev/null || true
+
+echo "==> Enabling cardwire (eBPF dGPU blocker that ergctl drives)"
+# ergctl drives cardwire: integrated (block render node) on battery, hybrid on AC.
+# battery_auto_switch off because ergctl owns the switching, not cardwire's upower.
+# experimental_nvidia_block stays OFF: on this GPU it wedges RTD3 (dGPU stuck at D0,
+# "Video Memory: Active") instead of letting it D3cold — documented the hard way.
+systemctl unmask cardwired 2>/dev/null || true
+systemctl enable --now cardwired 2>/dev/null || true
+sleep 1
+cardwire config experimental-nvidia-block false 2>/dev/null || true
+cardwire config battery-auto-switch false 2>/dev/null || true
+cardwire config save 2>/dev/null || true
 
 echo "==> Making ergctl the sole owner of the dynamic profile (stop asusd racing it)"
 # asusd also switches platform_profile + EPP on AC/battery (change_platform_profile_*),

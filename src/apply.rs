@@ -27,12 +27,13 @@ fn apply_state(label: &str, s: &StateCfg) {
     sysfs::set_platform_profile(&s.profile);
     sysfs::set_boost(s.boost);
     sysfs::set_epp(&s.epp);
-    // GPU power is left to NVIDIA RTD3 + the guards; ergctl does NOT switch a GPU
-    // mode here (cardwire is retired — switching it while the GPU is awake traps
-    // it at D0).
+    // dGPU: cardwire blocks it (integrated) on battery / makes it available (hybrid)
+    // on AC. With cardwire's experimental_nvidia_block on, integrated blocks the
+    // proprietary /dev/nvidia* nodes too, so nothing can wake it; RTD3 then D3colds it.
+    sysfs::cardwire_set(&s.gpu_mode);
     println!(
-        "[ergctl] {label}: profile={} boost={} epp={}",
-        s.profile, s.boost, s.epp
+        "[ergctl] {label}: profile={} boost={} epp={} gpu={}",
+        s.profile, s.boost, s.epp, s.gpu_mode
     );
 }
 
@@ -77,6 +78,7 @@ pub fn status() {
         sysfs::read_trim("/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference")
             .unwrap_or_default()
     );
+    println!("GPU mode         : {}", sysfs::cardwire_get());
     println!("dGPU power       : {}", sysfs::dgpu_runtime_status());
     println!(
         "audio-guard      : {}",

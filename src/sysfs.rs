@@ -226,3 +226,27 @@ pub fn service_active(name: &str) -> bool {
 pub fn dgpu_runtime_status() -> String {
     read_trim(&format!("{DGPU_PCI}/power/runtime_status")).unwrap_or_else(|| "?".into())
 }
+
+// ----------------------------------------------------------------- cardwire (dGPU)
+
+/// Set the cardwire GPU mode (integrated = block the dGPU via eBPF; hybrid = available).
+/// In integrated mode cardwire blocks app access; with experimental_nvidia_block on,
+/// the proprietary /dev/nvidia* nodes are blocked too, so NOTHING can open/wake it.
+pub fn cardwire_set(mode: &str) {
+    if let Err(e) = Command::new("cardwire").arg("set").arg(mode).status() {
+        eprintln!("ergctl: cardwire set {mode}: {e}");
+    }
+}
+
+/// Current cardwire mode (for status). "unknown" if cardwire/daemon unavailable.
+pub fn cardwire_get() -> String {
+    Command::new("cardwire")
+        .arg("get")
+        .output()
+        .ok()
+        .and_then(|o| String::from_utf8(o.stdout).ok())
+        .and_then(|s| s.lines().next().map(str::to_string))
+        .map(|l| l.replace("Current Mode:", "").trim().to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "unknown".into())
+}

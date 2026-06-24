@@ -53,15 +53,15 @@ impl Config {
                 profile: s("battery_profile", "quiet"),
                 boost: b("battery_boost", false),
                 epp: s("battery_epp", "power"),
-                // smart = cardwire keeps the dGPU blocked (iGPU only) and unblocks
-                // it on-demand when an app actually opens the GPU, then re-blocks.
-                gpu_mode: s("battery_gpu", "smart"),
+                // integrated = block the dGPU on battery; hybrid on AC makes it
+                // available again. ergctl auto-switches these on every plug/unplug.
+                gpu_mode: s("battery_gpu", "integrated"),
             },
             ac: StateCfg {
                 profile: s("ac_profile", "balanced"),
                 boost: b("ac_boost", true),
                 epp: s("ac_epp", "balance_performance"),
-                gpu_mode: s("ac_gpu", "smart"),
+                gpu_mode: s("ac_gpu", "hybrid"),
             },
             turbo: StateCfg {
                 profile: s("turbo_profile", "performance"),

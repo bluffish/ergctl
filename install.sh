@@ -87,6 +87,17 @@ echo "==> Masking nvidia-powerd + cardwired"
 # traps the dGPU at D0. Both masked so they can't fight RTD3.
 systemctl mask --now nvidia-powerd cardwired 2>/dev/null || true
 
+echo "==> Making ergctl the sole owner of the dynamic profile (stop asusd racing it)"
+# asusd also switches platform_profile + EPP on AC/battery (change_platform_profile_*),
+# which races ergctl. Disable that so ergctl owns profile/boost/EPP/PPT; asusd keeps
+# fans/keyboard/charge. (PPT itself is now owned by ergctl via asus-armoury.)
+ASUSD_RON=/etc/asusd/asusd.ron
+if [[ -f "$ASUSD_RON" ]]; then
+  cp -a "$ASUSD_RON" "${ASUSD_RON}.bak-$(date +%s)"
+  sed -i -E 's/(change_platform_profile_on_battery:[[:space:]]*)true/\1false/; s/(change_platform_profile_on_ac:[[:space:]]*)true/\1false/' "$ASUSD_RON"
+  systemctl restart asusd 2>/dev/null || true
+fi
+
 echo "==> Enabling GPU guard (Electron/Chromium default to iGPU)"
 /usr/bin/ergctl gpu-guard on || true
 

@@ -247,6 +247,7 @@ impl App {
         let p = Paragraph::new(vec![
             kv("dGPU", &dgpu),
             kv("RTX 4070", if s.dgpu_awake() { "drawing power" } else { "D3cold (off)" }),
+            kv("cardwire", &s.cardwire_mode),
             kv("pm", "RTD3 + guards"),
         ])
         .block(Block::bordered().title("GPU"));

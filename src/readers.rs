@@ -26,6 +26,7 @@ pub struct Snapshot {
     pub cpu_temp: f64,
     // gpu
     pub dgpu_state: String,
+    pub cardwire_mode: String,
     // system
     pub fan_rpm: u32,
     pub brightness_pct: u32,
@@ -115,6 +116,7 @@ pub fn read() -> Snapshot {
         cpu_mhz: sysfs::avg_cpu_mhz(),
         cpu_temp: sysfs::cpu_temp_c(),
         dgpu_state: sysfs::dgpu_runtime_status(),
+        cardwire_mode: sysfs::cardwire_get(),
         fan_rpm: sysfs::fan_rpm(),
         brightness_pct: sysfs::brightness_pct(),
         gpu_guard: crate::gpuguard::is_on(),

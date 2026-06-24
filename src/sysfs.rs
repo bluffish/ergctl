@@ -223,20 +223,6 @@ pub fn service_active(name: &str) -> bool {
         .unwrap_or(false)
 }
 
-pub fn dgpu_exists() -> bool {
-    Path::new(DGPU_PCI).exists()
-}
-
-/// Hard on/off for the dGPU. `present=false` REMOVES it from the PCI bus (no node,
-/// no driver — nothing can wake it); `present=true` rescans to bring it back.
-pub fn set_dgpu_present(present: bool) {
-    match (present, Path::new(DGPU_PCI).exists()) {
-        (true, false) => write_file("/sys/bus/pci/rescan", "1"),
-        (false, true) => write_file(&format!("{DGPU_PCI}/remove"), "1"),
-        _ => {}
-    }
-}
-
 pub fn dgpu_runtime_status() -> String {
     read_trim(&format!("{DGPU_PCI}/power/runtime_status")).unwrap_or_else(|| "?".into())
 }

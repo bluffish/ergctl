@@ -83,7 +83,11 @@ EOF
 systemctl restart tlp || true
 
 echo "==> Masking nvidia-powerd (keeps dGPU runtime PM from reaching D3cold)"
-systemctl mask --now nvidia-powerd 2>/dev/null || true
+# Mask first (instant, covers next boot). Stopping it can hang if nvidia-powerd is
+# wedged talking to a cardwire-blocked dGPU, so bound the stop and move on rather
+# than blocking the whole install; a reboot clears any stuck instance.
+systemctl mask nvidia-powerd 2>/dev/null || true
+timeout 10 systemctl stop nvidia-powerd 2>/dev/null || true
 
 echo "==> Enabling cardwire (eBPF dGPU blocker that ergctl drives)"
 # ergctl drives cardwire: integrated (block render node) on battery, hybrid on AC.

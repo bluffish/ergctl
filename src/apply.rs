@@ -80,6 +80,9 @@ pub fn status() {
     );
     println!("GPU mode         : {}", sysfs::cardwire_get());
     println!("dGPU power       : {}", sysfs::dgpu_runtime_status());
+    if let Some(w) = crate::dgpuwatch::last_waker() {
+        println!("dGPU last wake   : {w}");
+    }
     println!(
         "audio-guard      : {}",
         if crate::audioguard::is_on() { "on" } else { "off" }

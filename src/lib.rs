@@ -8,6 +8,7 @@
 pub mod apply;
 pub mod audioguard;
 pub mod config;
+pub mod dgpuwatch;
 pub mod gpuguard;
 pub mod readers;
 pub mod sysfs;

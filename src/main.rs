@@ -1,7 +1,7 @@
 //! ergctl — power cockpit for the ASUS ProArt P16. CLI + TUI frontends over the
 //! ergctl core library.
 
-use ergctl::{apply, audioguard, gpuguard, tui, waybar};
+use ergctl::{apply, audioguard, dgpuwatch, gpuguard, tui, waybar};
 use std::io::IsTerminal;
 use std::process::{exit, Command};
 
@@ -35,6 +35,12 @@ fn main() {
                 eprintln!("ergctl: tui error: {e}");
                 exit(1);
             }
+        }
+        // Trace what wakes the dGPU (records to /run/ergctl/dgpu-waker + a log).
+        // Long-running; needs root + bpftrace. Driven by ergctl-dgpu-watch.service.
+        "dgpu-watch" => {
+            ensure_root();
+            dgpuwatch::watch();
         }
         // Read-only status for a Waybar custom module; no root needed.
         "waybar" => waybar::emit(args.iter().any(|a| a == "--watch")),
@@ -94,7 +100,9 @@ fn print_help() {
          \x20 gpu-guard {{on|off|status}}  Default GL/EGL to the iGPU so Electron/Chromium\n\
          \x20          apps don't wake the dGPU (prime-run still overrides for games)\n\
          \x20 audio-guard {{on|off|status}}  Remove the dGPU's HDMI audio function so it\n\
-         \x20          stops pinning the GPU at D0 (off restores it; wakes the dGPU)\n\n\
+         \x20          stops pinning the GPU at D0 (off restores it; wakes the dGPU)\n\
+         \x20 dgpu-watch  Trace + log what wakes the dGPU (needs bpftrace; the\n\
+         \x20          ergctl-dgpu-watch.service runs this and the TUI shows the last waker)\n\n\
          CONFIG:\n  /etc/ergctl.conf",
         env!("CARGO_PKG_VERSION")
     );

@@ -12,7 +12,8 @@ depends=('systemd'
          'nvidia-laptop-power-cfg'
          # ergctl drives `cardwire set integrated|hybrid` to block/expose the dGPU.
          'cardwire')
-optdepends=('tlp: deep power tunables (PCIe/USB/disk/wifi)'
+optdepends=('bpftrace: dGPU wake watcher (ergctl-dgpu-watch — logs what wakes the dGPU)'
+            'tlp: deep power tunables (PCIe/USB/disk/wifi)'
             'asusctl: fan curves and keyboard control')
 makedepends=('cargo')
 provides=('proart-power')

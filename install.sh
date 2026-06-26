@@ -40,6 +40,7 @@ echo "==> Installing binary, units, udev rule"
 install -Dm755 "$DIR/target/release/ergctl"        /usr/bin/ergctl
 install -Dm644 "$DIR/systemd/ergctl.service"        /usr/lib/systemd/system/ergctl.service
 install -Dm644 "$DIR/systemd/ergctl-resume.service" /usr/lib/systemd/system/ergctl-resume.service
+install -Dm644 "$DIR/systemd/ergctl-dgpu-watch.service" /usr/lib/systemd/system/ergctl-dgpu-watch.service
 install -Dm644 "$DIR/udev/99-ergctl.rules"          /usr/lib/udev/rules.d/99-ergctl.rules
 
 if [[ -f /etc/ergctl.conf ]]; then
@@ -130,6 +131,14 @@ systemctl daemon-reload
 udevadm control --reload
 systemctl enable --now ergctl.service
 systemctl enable ergctl-resume.service
+
+# dGPU wake watcher — only if bpftrace is present (it's an optional dependency).
+if command -v bpftrace >/dev/null 2>&1; then
+  echo "==> Enabling dGPU wake watcher (logs what wakes the dGPU)"
+  systemctl enable --now ergctl-dgpu-watch.service
+else
+  echo "==> Skipping dGPU wake watcher (install 'bpftrace' then: systemctl enable --now ergctl-dgpu-watch)"
+fi
 
 echo
 echo "==> Done. Current state:"

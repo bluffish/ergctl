@@ -1,0 +1,16 @@
+[Unit]
+Description=ergctl dGPU wake watcher (records what wakes the dGPU)
+Documentation=https://github.com/bluffish/ergctl
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/ergctl dgpu-watch
+Restart=on-failure
+RestartSec=10
+# bpftrace needs these; keep the footprint tight otherwise.
+AmbientCapabilities=CAP_BPF CAP_PERFMON CAP_SYS_ADMIN
+Nice=10
+
+[Install]
+WantedBy=multi-user.target
